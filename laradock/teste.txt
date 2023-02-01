@@ -1,0 +1,17 @@
+laravel migrations generator
+kitloong
+
+adicionar nome de quem comentou e a data e hora do comentario
+
+morphed
+
+insert into migrations (migration, batch) values ('2022_11_08_140959_create_digiliza_table', 139);
+
+2019_12_14_000001_create_personal_access_tokens_table ................................................................................... 2ms DONE        
+  2022_11_08_140959_create_digiliza_table ................................................................................................ 63ms DONE
+  2022_11_08_140960_add_assunto_to_templates_table ........................................................................................ 2ms DONE        
+  2022_11_08_140961_add_cores_to_clientes_table ........................................................................................... 6ms DONE        
+  2022_11_08_140962_create_solicitacoes_permitidas_table .................................................................................. 1ms DONE        
+  2022_11_08_140963_create_solicitacoes_table ............................................................................................. 1ms DONE
+  2022_11_08_140964_change_integers_to_foreign ............................................................................................ 1ms DONE        
+  2022_11_08_140965_add_solicitacao_id_to_tarefas_table
