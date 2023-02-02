@@ -13,8 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('freight', function (Blueprint $table) {
+        Schema::create('shipping_prices', function (Blueprint $table) {
             $table->id();
+            $table->unsignedInteger('customer_id')->nullable();
+            $table->foreign('customer_id')->references('id')->on('customers');
             $table->string('from_postcode');
             $table->string('to_postcode');
             $table->float('from_weight');
@@ -31,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('freight');
+        Schema::dropIfExists('shipping_prices');
     }
 };

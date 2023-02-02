@@ -2,39 +2,67 @@
 
 namespace App\Http\Controllers;
 
-// use App\Models\Customer;
+use App\Http\Requests\ShippingPricesRequest;
+use App\Jobs\SendDataCsvToJobs;
+use App\Models\Customer;
+use App\Models\ShippingPrice;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use League\Csv\Reader;
+use League\Csv\Statement;
+use Illuminate\Support\Facades\{
+    Crypt,
+    DB
+};
 class CsvReadingController extends Controller
 {
-    public function reading(Request $request)
+    public function index()
     {
-        return view('Freight.register');
-        // $file = $request->file('file_csv');
-        // $customer = Customer::find($request->customerId);
+        $data['customers'] = Customer::all();
 
-        // if ($customer) {
-            $file = fopen('C:\xampp\htdocs\Testello\public\storage\price-table.csv', "r");
-        // $file = fopen(asset("/storage/price-table.csv"), "r");
+        return view('shipping.register', $data);
+    }
 
-            $row = 0;
-            $freight = [];
-            while ($line = fgetcsv($file, 1000, ";")) {
-                if ($row++ == 0) {
-                    continue;
-                }
+    public function detail(int $id)
+    {
+        $data['customer'] = Customer::find($id);
+        dd(ShippingPrice::where('customer_id', $id)->get());
+        $data['shippings'] = [];
+        // $data['shippings'] = ShippingPrice::where('customer_id', $id)->get();
 
-                $freight[] = [
-                    'from_postcode' => $line[0],
-                    'to_postcode' => $line[1],
-                    'from_weight' => $line[2],
-                    'to_weight' => $line[3],
-                    'cost' => $line[4]
-                ];
-            }
-            dd($freight[0]);
-            fclose($file);
-            // dd(fgetcsv($handle, 1000000, ";"));
-        // }
+        // $data['shippings'] = Customer::find($id);
+
+        return view('shipping.detail', $data);
+    }
+
+    public function reading(ShippingPricesRequest $request): RedirectResponse
+    {
+        $file = $request->file('file_csv');
+        $customer = Customer::find($request->customer);
+
+        if ($file->getClientOriginalExtension() != 'csv') {
+            return redirect(route('index'))->with('errors', 'Arquivo invalido!');
+        }
+
+        if (!$customer) {
+            return redirect(route('index'))->with('errors', 'cliente não existe!');
+        }
+
+        $filename = Hash::make($file->getClientOriginalName()).'.csv';
+        Storage::disk('public')->putFileAs('csv', $file, $filename);
+
+        $reader = Reader::createFromPath(storage_path().'/app/public/csv/'.$filename)
+                                ->setDelimiter(';')
+                                ->setHeaderOffset(0);
+        
+        $numberLines = count($reader);
+        $offset = ($numberLines / 1000);
+        for ($i=0; $i < $offset; $i++) {
+            SendDataCsvToJobs::dispatch($customer->id, $filename, $i);
+        }
+
+        return redirect(route('index'))->with('message', 'Importada tabela de frete.');
     }
 }

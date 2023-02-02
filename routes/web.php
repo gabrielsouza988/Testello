@@ -14,8 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
-Route::get('/teste', [CsvReadingController::class, 'reading']);
+Route::get('/', [CsvReadingController::class, 'index'])->name('index');
+Route::get('/detalhes/{id}', [CsvReadingController::class, 'detail'])->name('detail');
+Route::post('/cadastrar-tabela-frete', [CsvReadingController::class, 'reading'])->name('register-tabela-frete');
