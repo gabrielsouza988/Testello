@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CsvReadingController;
+use App\Http\Controllers\ShippingPricesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,11 +13,7 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-Route::get('/', [CsvReadingController::class, 'index'])->name('index');
-Route::get('/detalhes/{id}', [CsvReadingController::class, 'detail'])->name('detail');
-Route::post('/cadastrar-tabela-frete', [CsvReadingController::class, 'reading'])->name('register-tabela-frete');
+Route::get('/', [ShippingPricesController::class, 'index'])->name('index');
+Route::get('/detalhes/{id}', [ShippingPricesController::class, 'detail'])->name('detail');
+Route::post('/cadastrar-tabela-frete', [ShippingPricesController::class, 'register'])->name('register-tabela-frete');
+Route::patch('/atualizar-tabela-frete/{id}', [ShippingPricesController::class, 'update'])->name('update-tabela-frete');

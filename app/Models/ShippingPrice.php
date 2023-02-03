@@ -13,6 +13,8 @@ class ShippingPrice extends Model
 {
     // use HasFactory;
 
+    const ALLOWED_FILE_TYPE = 'csv';
+
     protected $fillable = [
         'customer_id',
         'from_postcode',

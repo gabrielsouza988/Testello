@@ -13,4 +13,9 @@ class Customer extends Model
         'name',
     ];
 
+    public function shippingPrice()
+    {
+        return $this->hasMany(ShippingPrice::class, 'customer_id', 'id');
+    }
+
 }

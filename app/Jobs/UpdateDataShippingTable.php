@@ -4,21 +4,19 @@ namespace App\Jobs;
 
 use App\Models\ShippingPrice;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use League\Csv\Reader;
 use League\Csv\Statement;
 
-class SendDataCsvToJobs implements ShouldQueue
+class UpdateDataShippingTable implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    private int $customerId;
+    private string $folderSave;
     private string $fileName;
+    private int $customerId;
     private int $offset;
 
     /**
@@ -26,10 +24,11 @@ class SendDataCsvToJobs implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(int $customerId, string $fileName, int $offset)
+    public function __construct(string $fileName, string $folderSave, int $customerId,  int $offset)
     {
-        $this->customerId = $customerId;
+        $this->folderSave = $folderSave;
         $this->fileName = $fileName;
+        $this->customerId = $customerId;
         $this->offset = $offset;
     }
 
@@ -40,21 +39,33 @@ class SendDataCsvToJobs implements ShouldQueue
      */
     public function handle(): void
     {
-        $reader = Reader::createFromPath(storage_path().'/app/public/csv/'.$this->fileName)
-                            ->setDelimiter(';')
-                            ->setHeaderOffset(0);
+        ShippingPrice::where('customer_id', $this->customerId)->delete();
+        $rows = $this->getRows();
+        ShippingPrice::insert($rows);
+    }
+
+    /**
+     * Get rows from CSV file.
+     *
+     * @return array
+     */
+    private function getRows(): array
+    {
+        $reader = Reader::createFromPath(
+            storage_path("app/public/{$this->folderSave}/{$this->fileName}")
+        )->setDelimiter(';')->setHeaderOffset(0);
 
         $records = Statement::create()
-                 ->offset($this->offset)
-                 ->limit(1000)
-                 ->process($reader);
+            ->offset($this->offset)
+            ->limit(1000)
+            ->process($reader);
 
         $rows = [];
         foreach ($records as $line) {
             $rows[] = [
                 'customer_id' => $this->customerId,
-                "from_postcode" => (string) $line['from_postcode'],
-                "to_postcode" => (string) $line['to_postcode'],
+                "from_postcode" => (string) filter_var($line['from_postcode'], FILTER_UNSAFE_RAW),
+                "to_postcode" => (string) filter_var($line['to_postcode'], FILTER_UNSAFE_RAW),
                 "from_weight" => (float) str_replace(',', '.', $line['from_weight']),
                 "to_weight" => (float) str_replace(',', '.', $line['to_weight']),
                 "cost" => (float) str_replace(',', '.', $line['cost']),
@@ -63,6 +74,6 @@ class SendDataCsvToJobs implements ShouldQueue
             ];
         }
 
-        ShippingPrice::insert($rows);
+        return $rows;
     }
 }
