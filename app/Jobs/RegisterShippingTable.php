@@ -2,30 +2,34 @@
 
 namespace App\Jobs;
 
+use App\Models\ShippingPrice;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use League\Csv\Reader;
 use League\Csv\Statement;
-use League\Csv\ResultSet;
 
 class RegisterShippingTable implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    private $data;
+    private string $folderSave;
+    private string $fileName;
+    private int $customerId;
+    private int $offset;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(ResultSet $data)
+    public function __construct(string $fileName, string $folderSave, int $customerId, int $offset)
     {
-        $this->data = $data;
+        $this->folderSave = $folderSave;
+        $this->fileName = $fileName;
+        $this->customerId = $customerId;
+        $this->offset = $offset;
     }
 
     /**
@@ -33,12 +37,46 @@ class RegisterShippingTable implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
-        $row = [];
-        foreach ($records as $line) {
-            $row[] = $line;
+        $existShippingPrices = ShippingPrice::where('customer_id', $this->customerId)->first();
+        if ($existShippingPrices) {
+            ShippingPrice::where('customer_id', $this->customerId)->delete();
         }
-        dd($row);
+        $rows = $this->getRows();
+        ShippingPrice::insert($rows);
+    }
+
+    /**
+     * Get rows from CSV file.
+     *
+     * @return array
+     */
+    private function getRows(): array
+    {
+        $reader = Reader::createFromPath(
+            storage_path("app/public/{$this->folderSave}/{$this->fileName}")
+        )->setDelimiter(';')->setHeaderOffset(0);
+
+        $records = Statement::create()
+            ->offset($this->offset)
+            ->limit(1000)
+            ->process($reader);
+
+        $rows = [];
+        foreach ($records as $line) {
+            $rows[] = [
+                'customer_id' => $this->customerId,
+                "from_postcode" => (string) filter_var($line['from_postcode'], FILTER_UNSAFE_RAW),
+                "to_postcode" => (string) filter_var($line['to_postcode'], FILTER_UNSAFE_RAW),
+                "from_weight" => (float) str_replace(',', '.', $line['from_weight']),
+                "to_weight" => (float) str_replace(',', '.', $line['to_weight']),
+                "cost" => (float) str_replace(',', '.', $line['cost']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        return $rows;
     }
 }

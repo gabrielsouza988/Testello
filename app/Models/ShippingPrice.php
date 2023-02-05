@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\{
 
 class ShippingPrice extends Model
 {
-    // use HasFactory;
+    use HasFactory;
 
     const ALLOWED_FILE_TYPE = 'csv';
 

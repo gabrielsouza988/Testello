@@ -28,7 +28,7 @@ class CsvFileService
             ->setHeaderOffset(0);
 
         $numRows = count($reader);
-        $offset = ceil($numRows / 1000);
+        $offset = (int) ceil($numRows / 1000);
 
         return [
             'filename' => $filename,

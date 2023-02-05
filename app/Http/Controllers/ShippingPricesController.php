@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingPricesRequest;
-use App\Jobs\RegisterDataShippingTable;
-use App\Jobs\UpdateDataShippingTable;
+use App\Jobs\RegisterShippingTable;
 use App\Models\Customer;
 use App\Models\ShippingPrice;
 use App\Services\CsvFileService;
@@ -39,24 +38,21 @@ class ShippingPricesController extends Controller
         return view('shipping.detail', $data);
     }
 
-    public function register(ShippingPricesRequest $request): RedirectResponse
+    public function store(ShippingPricesRequest $request): RedirectResponse
     {
         $file = $request->file('file_csv');
         $customer = Customer::find($request->customer);
 
-        $validation = $this->validateFile($file, 'csv', $customer);
+        $validation = $this->validateFile($file, ShippingPrice::ALLOWED_FILE_TYPE, $customer);
         if ($validation['error']) {
             return redirect(route('index'))
-                ->with('errors', $validation['message']);
+                ->with('menssageError', $validation['message']);
         }
 
-        $fileData = $this->csvFileService->saveFile('csv', $file);
-        for ($i=0; $i < $fileData['offset']; $i++) {
-            RegisterDataShippingTable::dispatch($fileData['filename'], ShippingPrice::ALLOWED_FILE_TYPE, $customer->id, $i);
-        }
+        $this->sendToJob($file, $customer);
 
         return redirect(route('index'))
-            ->with('message', 'Importada tabela de frete.');
+            ->with('message', 'Tabela de frete importada. Por favor, aguarde alguns instantes.');
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -66,17 +62,22 @@ class ShippingPricesController extends Controller
 
         $validation = $this->validateFile($file, ShippingPrice::ALLOWED_FILE_TYPE, $customer);
         if ($validation['error']) {
-            return redirect(route('index'))
-                ->with('errors', $validation['message']);
+            return redirect(route('detail', $id))
+                ->with('message', $validation['message']);
         }
 
-        $fileData = $this->csvFileService->saveFile(ShippingPrice::ALLOWED_FILE_TYPE, $file);
-        for ($i = 0; $i < $fileData['offset']; $i++) {
-            UpdateDataShippingTable::dispatch($fileData['filename'], ShippingPrice::ALLOWED_FILE_TYPE, $customer->id, $i);
-        }
+        $this->sendToJob($file, $customer);
 
         return redirect(route('detail', $id))
-            ->with('message', 'Importada tabela de frete.');
+            ->with('message', 'Tabela de frete importada. Por favor, aguarde alguns instantes.');
+    }
+
+    private function sendToJob(UploadedFile $file, Customer $customer): void
+    {
+        $fileData = $this->csvFileService->saveFile('csv', $file);
+        for ($i = 0; $i < $fileData['offset']; $i++) {
+            RegisterShippingTable::dispatch($fileData['filename'], ShippingPrice::ALLOWED_FILE_TYPE, $customer->id, $i);
+        }
     }
 
     private function validateFile(UploadedFile $file, string $fileAllowed, Customer $customer = null): array
@@ -84,7 +85,7 @@ class ShippingPricesController extends Controller
         if (!$customer) {
             return [
                 'error' => true,
-                'message' => 'Cliente não existe.'
+                'message' => 'Cliente não encontrado.'
             ];
         }
 
