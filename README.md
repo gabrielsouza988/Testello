@@ -44,10 +44,10 @@ $ cp .env.example ./.env
 # instalar os containers docker
 $ docker-compose up -d nginx postgres pgadmin workspace
 
-#logar como usuario do workspace
+# entre no container do workspace
 $ docker-compose exec workspace bash
 
-#instalar as depedencias do projeto
+# instalar as depedencias do projeto
 $ composer i
 
 # copiar o arquivo do projeto .env.example para .env
@@ -61,39 +61,32 @@ $ php artisan optimize:clear
 
 ```
 
-<h5>Crie o Banco de dados</h5>
-
 <p>Acesse o link:</p>
 <a href="http://localhost:5050">http://localhost:5050</a>
 
+<h5>Crie o Banco de dados</h5>
+
+<h6>Abra novamente o terminal e execute os seguintes comandos.</h6>
+
 ```bash
-# iniciar o nosso banco de dados
+# entre com no container do workspace
+$ docker-compose exec workspace bash
 
-
-# Agora rode o seguinte codigo para construir o nosso BD
+# para contruir as tabelas e inserir dados
 $ php artisan migrate:fresh --seed
 
-# Depois você irar até a pasta que esta o nosso Front-end
-$ cd ./front-end
+```
+<h6>lembre-se de verificar as credenciais de acesso ao banco de dados no arquivo .env</h6>
 
-#Instalar dependecias do Front
-$ npm i
+<h5>Inicie a Fila do queue</h5>
+<h6>Com o terminal ainda aberto inicie o seguinte comando</h6>
 
-# Para iniciar o projeto você deve rodar os seguintes comandos
-# Dentro do diretorio do front-end rode
-$ npm run serve -- --port=3000
+```bash
+# Este comando inicia a fila do queue, vc irar ter que mante-ló em andamento para funcionar as filas
+$ php artisan queue:work
 
-# Dentro do diretorio do Back-end
-$ php artisan serve --port=4000 
-
-# Agora inicie o seu banco de dados de sua preferencia
-# So lembre de verificar as credenciais de acesso a ele no arquivo .env
-
-
-# OBS: Caso queira mudar a porta do servidor da api do Back-end
-# Tem uma const dentro do front-end chamada urlApi
-# está no arquivo src/main.js
-$ export const urlApi = 'http://127.0.0.1:SUAPORTA/api/';
+#Obs: verifique se esta dentro do container do workspace
+# $ docker-compose exec workspace bash
 
 ```
 
