@@ -64,7 +64,15 @@ $ php artisan optimize:clear
 <p>Acesse o link:</p>
 <a href="http://localhost:5050">http://localhost:5050</a>
 
+<p>Dados de acesso padrão do pgadmin:</p>
+email: pgadmin4@pgadmin.org
+senha: admin
+
 <h5>Crie o Banco de dados</h5>
+
+<p>Dados de acesso padrão do postgres:</p>
+usuario: postgres
+senha: root
 
 <h6>Abra novamente o terminal e execute os seguintes comandos.</h6>
 
