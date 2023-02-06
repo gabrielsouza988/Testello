@@ -41,6 +41,9 @@ $ cd ./laradock
 #copiar a .env.example do laradock
 $ cp .env.example ./.env
 
+# copiar arquivo de config do ngix
+$ cp ./nginx/sites/laravel.conf.example ./laravel.conf
+
 # instalar os containers docker
 $ docker-compose up -d nginx postgres pgadmin workspace
 
